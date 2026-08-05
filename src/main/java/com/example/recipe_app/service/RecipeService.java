@@ -42,18 +42,16 @@ public class RecipeService {
 
         createRecipeRequest.ingredients().forEach(ingredientDto -> {
             Ingredient ingredient = ingredientRepository.findByName(ingredientDto.name())
-                    .orElseGet(() -> {
-                        Ingredient newIngredient = new Ingredient();
-                        newIngredient.setName(ingredientDto.name());
-                        newIngredient.setUnit(ingredientDto.unit());
-                        return ingredientRepository.save(newIngredient);
-                    });
+                    .orElseGet(() -> ingredientRepository.save(Ingredient.builder()
+                            .name(ingredientDto.name())
+                            .unit(ingredientDto.unit())
+                            .build()));
 
-            RecipeIngredient recipeIngredient = new RecipeIngredient();
-            recipeIngredient.setIngredient(ingredient);
-            recipeIngredient.setRecipe(recipe);
-            recipeIngredient.setQuantity(ingredientDto.quantity());
-            recipeIngredients.add(recipeIngredient);
+            recipeIngredients.add(RecipeIngredient.builder()
+                    .ingredient(ingredient)
+                    .recipe(recipe)
+                    .quantity(ingredientDto.quantity())
+                    .build());
         });
 
         recipe.setRecipeIngredients(recipeIngredients);
