@@ -63,4 +63,10 @@ public class RecipeService {
                 .orElseThrow(() -> new EntityNotFoundException("Recipe not found with id: " + id));
         return recipeMapper.toRecipeResponse(recipe);
     }
+
+    public List<RecipeResponse> getAllRecipes() {
+        return recipeRepository.findAll().stream()
+                .map(recipeMapper::toRecipeResponse)
+                .toList();
+    }
 }
