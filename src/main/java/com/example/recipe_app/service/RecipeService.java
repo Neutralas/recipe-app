@@ -7,7 +7,6 @@ import com.example.recipe_app.entity.Recipe;
 import com.example.recipe_app.entity.RecipeIngredient;
 import com.example.recipe_app.mapper.RecipeMapper;
 import com.example.recipe_app.repository.IngredientRepository;
-import com.example.recipe_app.repository.RecipeIngredientRepository;
 import com.example.recipe_app.repository.RecipeRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
@@ -23,13 +22,13 @@ public class RecipeService {
     private final RecipeMapper recipeMapper;
     private final IngredientRepository ingredientRepository;
 
-    public RecipeService(RecipeRepository recipeRepository, RecipeMapper recipeMapper, RecipeIngredientRepository recipeIngredientRepository, IngredientRepository ingredientRepository) {
+    public RecipeService(RecipeRepository recipeRepository, RecipeMapper recipeMapper, IngredientRepository ingredientRepository) {
         this.recipeRepository = recipeRepository;
         this.recipeMapper = recipeMapper;
         this.ingredientRepository = ingredientRepository;
     }
 
-    public Recipe createRecipe(CreateRecipeRequest createRecipeRequest) {
+    public RecipeResponse createRecipe(CreateRecipeRequest createRecipeRequest) {
 
         Recipe recipe = new Recipe();
         recipe.setName(createRecipeRequest.name());
@@ -56,7 +55,7 @@ public class RecipeService {
 
         recipe.setRecipeIngredients(recipeIngredients);
         recipeRepository.save(recipe);
-        return recipe;
+        return recipeMapper.toRecipeResponse(recipe);
     }
 
     public RecipeResponse getRecipe(Long id) {

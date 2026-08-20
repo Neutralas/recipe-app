@@ -2,6 +2,7 @@ package com.example.recipe_app.service;
 
 import com.example.recipe_app.dto.CreateRecipeRequest;
 import com.example.recipe_app.dto.RecipeIngredientRequest;
+import com.example.recipe_app.dto.RecipeIngredientResponse;
 import com.example.recipe_app.dto.RecipeResponse;
 import com.example.recipe_app.entity.Ingredient;
 import com.example.recipe_app.entity.Recipe;
@@ -10,9 +11,10 @@ import com.example.recipe_app.mapper.RecipeMapper;
 import com.example.recipe_app.repository.IngredientRepository;
 import com.example.recipe_app.repository.RecipeRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -39,12 +41,15 @@ class RecipeServiceTest {
     @Mock
     private RecipeRepository recipeRepository;
     @Mock
-    private RecipeMapper recipeMapper;
-    @Mock
     private IngredientRepository ingredientRepository;
 
-    @InjectMocks
+    private final RecipeMapper recipeMapper = new RecipeMapper();
     private RecipeService testee;
+
+    @BeforeEach
+    void setUp() {
+        testee = new RecipeService(recipeRepository, recipeMapper, ingredientRepository);
+    }
 
     // create recipe new ingredients
     @Test
@@ -56,31 +61,155 @@ class RecipeServiceTest {
         when(ingredientRepository.save(any(Ingredient.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Recipe result = testee.createRecipe(createRecipeRequest);
+        RecipeResponse result = testee.createRecipe(createRecipeRequest);
 
-        assertEquals(RECIPE_NAME, result.getName());
-        assertEquals(2, result.getPortions());
-        assertEquals(INSTRUCTIONS, result.getInstructions());
-        assertEquals(CREATED_BY, result.getCreatedBy());
-        assertNotNull(result.getCreatedAt());
+        // check RecipeResponse fields:
+        assertEquals(RECIPE_NAME, result.name());
+        assertEquals(2, result.portions());
+        assertEquals(INSTRUCTIONS, result.instructions());
+        assertEquals(CREATED_BY, result.createdBy());
 
-        RecipeIngredient recipeIngredient1 = result.getRecipeIngredients().stream()
+        RecipeIngredientResponse recipeIngredient1 = result.ingredients().stream()
+                .filter(ri -> ONION.equals(ri.name()))
+                .findFirst().orElseThrow();
+        RecipeIngredientResponse recipeIngredient2 = result.ingredients().stream()
+                .filter(ri -> GARLIC.equals(ri.name()))
+                .findFirst().orElseThrow();
+
+        assertEquals(ONION, recipeIngredient1.name());
+        assertEquals(GRAM, recipeIngredient1.unit());
+        assertEquals(BigDecimal.ONE, recipeIngredient1.quantity());
+        assertEquals(GARLIC, recipeIngredient2.name());
+        assertEquals(ML, recipeIngredient2.unit());
+        assertEquals(BigDecimal.TWO, recipeIngredient2.quantity());
+
+        // to be able to check Recipe fields as it is not returned by the method call any more
+        ArgumentCaptor<Recipe> recipeCaptor = ArgumentCaptor.forClass(Recipe.class);
+        verify(recipeRepository).save(recipeCaptor.capture());
+        Recipe savedRecipe = recipeCaptor.getValue();
+
+        assertNotNull(savedRecipe.getCreatedAt());
+
+        RecipeIngredient savedIngredient1 = savedRecipe.getRecipeIngredients().stream()
                 .filter(ri -> ONION.equals(ri.getIngredient().getName()))
-                .findFirst()
-                .orElseThrow();
-        RecipeIngredient recipeIngredient2 = result.getRecipeIngredients().stream()
+                .findFirst().orElseThrow();
+        RecipeIngredient savedIngredient2 = savedRecipe.getRecipeIngredients().stream()
                 .filter(ri -> GARLIC.equals(ri.getIngredient().getName()))
-                .findFirst()
-                .orElseThrow();
+                .findFirst().orElseThrow();
 
-        assertEquals(ONION, recipeIngredient1.getIngredient().getName());
-        assertEquals(GRAM, recipeIngredient1.getIngredient().getUnit());
-        assertEquals(BigDecimal.ONE, recipeIngredient1.getQuantity());
-        assertEquals(result, recipeIngredient1.getRecipe());
-        assertEquals(GARLIC, recipeIngredient2.getIngredient().getName());
-        assertEquals(ML, recipeIngredient2.getIngredient().getUnit());
-        assertEquals(BigDecimal.TWO, recipeIngredient2.getQuantity());
-        assertEquals(result, recipeIngredient2.getRecipe());
+        assertEquals(savedRecipe, savedIngredient1.getRecipe());
+        assertEquals(savedRecipe, savedIngredient2.getRecipe());
+    }
+
+    // create recipe existing ingredients
+    @Test
+    void createRecipeWithExistingIngredients() {
+
+        CreateRecipeRequest createRecipeRequest = getCreateRecipeRequest();
+        Ingredient ingredient1 = new Ingredient(0L, ONION, GRAM);
+        Ingredient ingredient2 = new Ingredient(1L, GARLIC, ML);
+
+        when(ingredientRepository.findByName(ONION)).thenReturn(Optional.of(ingredient1));
+        when(ingredientRepository.findByName(GARLIC)).thenReturn(Optional.of(ingredient2));
+
+        RecipeResponse result = testee.createRecipe(createRecipeRequest);
+
+        // check RecipeResponse fields:
+        assertEquals(RECIPE_NAME, result.name());
+        assertEquals(2, result.portions());
+        assertEquals(INSTRUCTIONS, result.instructions());
+        assertEquals(CREATED_BY, result.createdBy());
+        verify(ingredientRepository, never()).save(any(Ingredient.class));
+
+        RecipeIngredientResponse recipeIngredient1 = result.ingredients().stream()
+                .filter(ri -> ONION.equals(ri.name()))
+                .findFirst().orElseThrow();
+        RecipeIngredientResponse recipeIngredient2 = result.ingredients().stream()
+                .filter(ri -> GARLIC.equals(ri.name()))
+                .findFirst().orElseThrow();
+
+        assertEquals(ONION, recipeIngredient1.name());
+        assertEquals(GRAM, recipeIngredient1.unit());
+        assertEquals(BigDecimal.ONE, recipeIngredient1.quantity());
+        assertEquals(GARLIC, recipeIngredient2.name());
+        assertEquals(ML, recipeIngredient2.unit());
+        assertEquals(BigDecimal.TWO, recipeIngredient2.quantity());
+
+        // to be able to check Recipe fields as it is not returned by the method call any more
+        ArgumentCaptor<Recipe> recipeCaptor = ArgumentCaptor.forClass(Recipe.class);
+        verify(recipeRepository).save(recipeCaptor.capture());
+        Recipe savedRecipe = recipeCaptor.getValue();
+
+        assertNotNull(savedRecipe.getCreatedAt());
+
+        RecipeIngredient savedIngredient1 = savedRecipe.getRecipeIngredients().stream()
+                .filter(ri -> ONION.equals(ri.getIngredient().getName()))
+                .findFirst().orElseThrow();
+        RecipeIngredient savedIngredient2 = savedRecipe.getRecipeIngredients().stream()
+                .filter(ri -> GARLIC.equals(ri.getIngredient().getName()))
+                .findFirst().orElseThrow();
+
+        assertEquals(savedRecipe, savedIngredient1.getRecipe());
+        assertEquals(savedRecipe, savedIngredient2.getRecipe());
+    }
+
+    // create recipe empty list of ingredients passed in
+    @Test
+    void createRecipeWithNoIngredients() {
+        CreateRecipeRequest createRecipeRequest = getCreateRecipeRequestEmptyIngredients();
+
+        RecipeResponse result = testee.createRecipe(createRecipeRequest);
+
+        assertEquals(RECIPE_NAME, result.name());
+        assertEquals(2, result.portions());
+        assertEquals(INSTRUCTIONS, result.instructions());
+        assertEquals(CREATED_BY, result.createdBy());
+        assertEquals(List.of(), result.ingredients());
+
+        // to be able to check Recipe fields as it is not returned by the method call any more
+        ArgumentCaptor<Recipe> recipeCaptor = ArgumentCaptor.forClass(Recipe.class);
+        verify(recipeRepository).save(recipeCaptor.capture());
+        Recipe savedRecipe = recipeCaptor.getValue();
+
+        assertNotNull(savedRecipe.getCreatedAt());
+    }
+
+    // get recipe when recipe exists
+    @Test
+    void getRecipeWhenRecipeExists() {
+        Recipe foundRecipe = Recipe.builder()
+                .id(0L)
+                .name(RECIPE_NAME)
+                .portions(2)
+                .recipeIngredients(List.of())
+                .instructions(INSTRUCTIONS)
+                .createdBy(CREATED_BY)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(recipeRepository.findById(0L)).thenReturn(Optional.of(foundRecipe));
+
+        RecipeResponse result = testee.getRecipe(0L);
+
+        assertEquals(0L, result.id());
+        assertEquals(RECIPE_NAME, result.name());
+        assertEquals(2, result.portions());
+        assertEquals(List.of(), result.ingredients());
+        assertEquals(INSTRUCTIONS, result.instructions());
+        assertEquals(CREATED_BY, result.createdBy());
+    }
+
+    // get recipe when recipe doesn't exist
+    @Test
+    void getRecipeWhenRecipeDoesNotExist() {
+        when(recipeRepository.findById(0L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(EntityNotFoundException.class, () -> testee.getRecipe(0L));
+
+        String expectedMessage = "Recipe not found with id: 0";
+        String actualMessage = exception.getMessage();
+
+        assertTrue(actualMessage.contains(expectedMessage));
     }
 
     private CreateRecipeRequest getCreateRecipeRequest() {
@@ -109,107 +238,5 @@ class RecipeServiceTest {
                 INSTRUCTIONS,
                 CREATED_BY
         );
-    }
-
-    // create recipe existing ingredients
-    @Test
-    void createRecipeWithExistingIngredients() {
-
-        CreateRecipeRequest createRecipeRequest = getCreateRecipeRequest();
-        Ingredient ingredient1 = new Ingredient(0L, ONION, GRAM);
-        Ingredient ingredient2 = new Ingredient(1L, GARLIC, ML);
-
-        when(ingredientRepository.findByName(ONION)).thenReturn(Optional.of(ingredient1));
-        when(ingredientRepository.findByName(GARLIC)).thenReturn(Optional.of(ingredient2));
-
-        Recipe result = testee.createRecipe(createRecipeRequest);
-
-        assertEquals(RECIPE_NAME, result.getName());
-        assertEquals(2, result.getPortions());
-        assertEquals(INSTRUCTIONS, result.getInstructions());
-        assertEquals(CREATED_BY, result.getCreatedBy());
-        assertNotNull(result.getCreatedAt());
-        verify(ingredientRepository, never()).save(any(Ingredient.class));
-
-        RecipeIngredient recipeIngredient1 = result.getRecipeIngredients().stream()
-                .filter(ri -> ONION.equals(ri.getIngredient().getName()))
-                .findFirst()
-                .orElseThrow();
-        RecipeIngredient recipeIngredient2 = result.getRecipeIngredients().stream()
-                .filter(ri -> GARLIC.equals(ri.getIngredient().getName()))
-                .findFirst()
-                .orElseThrow();
-
-        assertEquals(ONION, recipeIngredient1.getIngredient().getName());
-        assertEquals(GRAM, recipeIngredient1.getIngredient().getUnit());
-        assertEquals(BigDecimal.ONE, recipeIngredient1.getQuantity());
-        assertEquals(result, recipeIngredient1.getRecipe());
-        assertEquals(GARLIC, recipeIngredient2.getIngredient().getName());
-        assertEquals(ML, recipeIngredient2.getIngredient().getUnit());
-        assertEquals(BigDecimal.TWO, recipeIngredient2.getQuantity());
-        assertEquals(result, recipeIngredient2.getRecipe());
-    }
-
-    // create recipe empty list of ingredients passed in
-    @Test
-    void createRecipeWithNoIngredients() {
-        CreateRecipeRequest createRecipeRequest = getCreateRecipeRequestEmptyIngredients();
-
-        Recipe result = testee.createRecipe(createRecipeRequest);
-
-        assertEquals(RECIPE_NAME, result.getName());
-        assertEquals(2, result.getPortions());
-        assertEquals(INSTRUCTIONS, result.getInstructions());
-        assertEquals(CREATED_BY, result.getCreatedBy());
-        assertNotNull(result.getCreatedAt());
-        assertEquals(List.of(), result.getRecipeIngredients());
-    }
-
-    // get recipe when recipe exists
-    @Test
-    void getRecipeWhenRecipeExists() {
-        Recipe foundRecipe = Recipe.builder()
-                .id(0L)
-                .name(RECIPE_NAME)
-                .portions(2)
-                .recipeIngredients(List.of())
-                .instructions(INSTRUCTIONS)
-                .createdBy(CREATED_BY)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        RecipeResponse mappedRecipeResponse = RecipeResponse.builder()
-                .id(0L)
-                .name(RECIPE_NAME)
-                .portions(2)
-                .ingredients(List.of())
-                .instructions(INSTRUCTIONS)
-                .createdBy(CREATED_BY)
-                .build();
-
-        when(recipeRepository.findById(0L)).thenReturn(Optional.of(foundRecipe));
-        when(recipeMapper.toRecipeResponse(foundRecipe)).thenReturn(mappedRecipeResponse);
-
-        RecipeResponse result = testee.getRecipe(0L);
-
-        assertEquals(0L, result.id());
-        assertEquals(RECIPE_NAME, result.name());
-        assertEquals(2, result.portions());
-        assertEquals(List.of(), result.ingredients());
-        assertEquals(INSTRUCTIONS, result.instructions());
-        assertEquals(CREATED_BY, result.createdBy());
-    }
-
-    // get recipe when recipe doesn't exist
-    @Test
-    void getRecipeWhenRecipeDoesNotExist() {
-        when(recipeRepository.findById(0L)).thenReturn(Optional.empty());
-
-        Exception exception = assertThrows(EntityNotFoundException.class, () -> testee.getRecipe(0L));
-
-        String expectedMessage = "Recipe not found with id: 0";
-        String actualMessage = exception.getMessage();
-
-        assertTrue(actualMessage.contains(expectedMessage));
     }
 }
