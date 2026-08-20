@@ -212,6 +212,41 @@ class RecipeServiceTest {
         assertTrue(actualMessage.contains(expectedMessage));
     }
 
+    // get recipes when recipes exist
+    @Test
+    void getRecipesWhenRecipesExist() {
+        Recipe foundRecipe = Recipe.builder()
+                .id(0L)
+                .name(RECIPE_NAME)
+                .portions(2)
+                .recipeIngredients(List.of())
+                .instructions(INSTRUCTIONS)
+                .createdBy(CREATED_BY)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(recipeRepository.findAll()).thenReturn(List.of(foundRecipe));
+
+        List<RecipeResponse> result = testee.getAllRecipes();
+
+        assertEquals(0L, result.getFirst().id());
+        assertEquals(RECIPE_NAME, result.getFirst().name());
+        assertEquals(2, result.getFirst().portions());
+        assertEquals(List.of(), result.getFirst().ingredients());
+        assertEquals(INSTRUCTIONS, result.getFirst().instructions());
+        assertEquals(CREATED_BY, result.getFirst().createdBy());
+    }
+
+    // get recipes when no recipes exist
+    @Test
+    void getRecipesWhenNoRecipesExist() {
+        when(recipeRepository.findAll()).thenReturn(List.of());
+
+        List<RecipeResponse> result = testee.getAllRecipes();
+
+        assertEquals(List.of(), result);
+    }
+
     private CreateRecipeRequest getCreateRecipeRequest() {
         RecipeIngredientRequest ingredient1dto = new RecipeIngredientRequest(
                 ONION, BigDecimal.ONE, GRAM
