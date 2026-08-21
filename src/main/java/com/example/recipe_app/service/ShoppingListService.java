@@ -1,18 +1,22 @@
 package com.example.recipe_app.service;
 
+import com.example.recipe_app.dto.ShoppingListResponse;
 import com.example.recipe_app.entity.RecipeIngredient;
 import com.example.recipe_app.entity.ShoppingList;
 import com.example.recipe_app.entity.ShoppingListItem;
+import com.example.recipe_app.mapper.ShoppingListMapper;
 import com.example.recipe_app.repository.RecipeIngredientRepository;
 import com.example.recipe_app.repository.ShoppingListRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
-public class ShoppingListBuilderService {
+public class ShoppingListService {
 
     // create a shopping list
     // shopping list consists of shopping list items
@@ -26,13 +30,15 @@ public class ShoppingListBuilderService {
 
     private final RecipeIngredientRepository recipeIngredientRepository;
     private final ShoppingListRepository shoppingListRepository;
+    private final ShoppingListMapper shoppingListMapper;
 
-    public ShoppingListBuilderService(RecipeIngredientRepository recipeIngredientRepository, ShoppingListRepository shoppingListRepository) {
+    public ShoppingListService(RecipeIngredientRepository recipeIngredientRepository, ShoppingListRepository shoppingListRepository, ShoppingListMapper shoppingListMapper) {
         this.recipeIngredientRepository = recipeIngredientRepository;
         this.shoppingListRepository = shoppingListRepository;
+        this.shoppingListMapper = shoppingListMapper;
     }
 
-    public ShoppingList buildShoppingList(List<Long> recipeIds) {
+    public ShoppingListResponse buildShoppingList(List<Long> recipeIds) {
 
         ShoppingList shoppingList = new ShoppingList();
 
@@ -59,12 +65,21 @@ public class ShoppingListBuilderService {
             shoppingList.getItems().addAll(itemsByIngredientId.values());
         }
 
-        /*
-        Do I want the controller layer to decide whether/when to persist, or
-        do I want this service to save the list itself before returning it?
-         */
         shoppingListRepository.save(shoppingList);
+        return shoppingListMapper.toShoppingListResponse(shoppingList);
+    }
 
-        return shoppingList;
+    @Transactional
+    public ShoppingListResponse retrieveShoppingList(Long shoppingListId) {
+        ShoppingList shoppingList = shoppingListRepository.findById(shoppingListId)
+                .orElseThrow(() -> new EntityNotFoundException("Shopping List not found with shoppingListId: " + shoppingListId));
+        return shoppingListMapper.toShoppingListResponse(shoppingList);
+    }
+
+    @Transactional
+    public List<ShoppingListResponse> getAllShoppingLists() {
+        return shoppingListRepository.findAll().stream()
+                .map(shoppingListMapper::toShoppingListResponse)
+                .toList();
     }
 }

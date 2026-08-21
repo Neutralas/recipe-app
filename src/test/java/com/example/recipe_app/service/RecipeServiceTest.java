@@ -244,7 +244,7 @@ class RecipeServiceTest {
 
         List<RecipeResponse> result = testee.getAllRecipes();
 
-        assertEquals(List.of(), result);
+        assertTrue(result.isEmpty());
     }
 
     private CreateRecipeRequest getCreateRecipeRequest() {

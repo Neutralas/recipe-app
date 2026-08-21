@@ -10,6 +10,7 @@ import com.example.recipe_app.repository.IngredientRepository;
 import com.example.recipe_app.repository.RecipeRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -58,12 +59,14 @@ public class RecipeService {
         return recipeMapper.toRecipeResponse(recipe);
     }
 
+    @Transactional
     public RecipeResponse getRecipe(Long id) {
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Recipe not found with id: " + id));
         return recipeMapper.toRecipeResponse(recipe);
     }
 
+    @Transactional
     public List<RecipeResponse> getAllRecipes() {
         return recipeRepository.findAll().stream()
                 .map(recipeMapper::toRecipeResponse)
