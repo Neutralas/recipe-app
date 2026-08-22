@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Entity
 @Getter
@@ -23,8 +22,9 @@ public class ShoppingListItem {
     @ManyToOne(fetch = FetchType.LAZY)
     ShoppingList shoppingList;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    List<Recipe> recipes;
+    // TODO: future goal
+//    @ManyToMany(fetch = FetchType.LAZY)
+//    List<Recipe> recipes;
 
     @ManyToOne(fetch = FetchType.LAZY)
     Ingredient ingredient;
