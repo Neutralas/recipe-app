@@ -11,5 +11,17 @@ services:
     volumes:
       - recipe-app-postgres-data:/var/lib/postgresql
 
+  app:
+    build: .
+    container_name: recipe-app
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/recipe_app
+      SPRING_DATASOURCE_USERNAME: recipe_app
+      SPRING_DATASOURCE_PASSWORD: recipe_app_password
+
 volumes:
   recipe-app-postgres-data:
