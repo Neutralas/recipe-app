@@ -14,7 +14,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -93,5 +93,18 @@ class ShoppingListControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void addShoppingListWithEmptyRecipeIds_ReturnsBadRequest() throws Exception {
+        BuildShoppingListRequest request = new BuildShoppingListRequest(List.of());
+
+        mockMvc.perform(post("/shopping-lists")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.recipeIds").value("At least one recipe ID is required"));
+
+        verify(shoppingListService, never()).buildShoppingList(any());
     }
 }

@@ -39,6 +39,7 @@ public class ShoppingListService {
      * @param recipeIds the IDs of the recipes to include
      * @return the created shopping list
      */
+    @Transactional
     public ShoppingListResponse buildShoppingList(List<Long> recipeIds) {
 
         ShoppingList shoppingList = new ShoppingList();

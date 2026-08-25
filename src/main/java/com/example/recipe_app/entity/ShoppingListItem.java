@@ -22,10 +22,6 @@ public class ShoppingListItem {
     @ManyToOne(fetch = FetchType.LAZY)
     ShoppingList shoppingList;
 
-    // TODO: future goal
-//    @ManyToMany(fetch = FetchType.LAZY)
-//    List<Recipe> recipes;
-
     @ManyToOne(fetch = FetchType.LAZY)
     Ingredient ingredient;
 

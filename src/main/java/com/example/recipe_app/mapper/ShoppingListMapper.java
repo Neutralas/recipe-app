@@ -18,7 +18,7 @@ public class ShoppingListMapper {
                 .build();
     }
 
-    public ShoppingListItemResponse toShoppingListItemResponse(ShoppingListItem shoppingListItem) {
+    private ShoppingListItemResponse toShoppingListItemResponse(ShoppingListItem shoppingListItem) {
         return ShoppingListItemResponse.builder()
                 .ingredientId(shoppingListItem.getIngredient().getId())
                 .name(shoppingListItem.getIngredient().getName())

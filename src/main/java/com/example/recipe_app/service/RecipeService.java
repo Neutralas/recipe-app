@@ -39,6 +39,7 @@ public class RecipeService {
      * @param createRecipeRequest the recipe data
      * @return the created recipe
      */
+    @Transactional
     public RecipeResponse createRecipe(CreateRecipeRequest createRecipeRequest) {
 
         Recipe recipe = new Recipe();

@@ -22,7 +22,7 @@ public class RecipeMapper {
                 .build();
     }
 
-    public RecipeIngredientResponse toRecipeIngredientResponse(RecipeIngredient recipeIngredient) {
+    private RecipeIngredientResponse toRecipeIngredientResponse(RecipeIngredient recipeIngredient) {
         return RecipeIngredientResponse.builder()
                 .id(recipeIngredient.getIngredient().getId())
                 .name(recipeIngredient.getIngredient().getName())

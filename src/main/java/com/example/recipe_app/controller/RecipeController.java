@@ -3,6 +3,7 @@ package com.example.recipe_app.controller;
 import com.example.recipe_app.dto.CreateRecipeRequest;
 import com.example.recipe_app.dto.RecipeResponse;
 import com.example.recipe_app.service.RecipeService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +30,7 @@ public class RecipeController {
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public RecipeResponse addRecipe(@RequestBody CreateRecipeRequest createRecipeRequest) {
+    public RecipeResponse addRecipe(@Valid @RequestBody CreateRecipeRequest createRecipeRequest) {
         return recipeService.createRecipe(createRecipeRequest);
     }
 
