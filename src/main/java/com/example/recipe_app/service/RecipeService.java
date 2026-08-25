@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service responsible for recipe creation and retrieval.
+ */
 @Service
 public class RecipeService {
 
@@ -29,6 +32,13 @@ public class RecipeService {
         this.ingredientRepository = ingredientRepository;
     }
 
+    /**
+     * Creates a recipe and associates it with its ingredients.
+     * Existing ingredients are reused when possible.
+     *
+     * @param createRecipeRequest the recipe data
+     * @return the created recipe
+     */
     public RecipeResponse createRecipe(CreateRecipeRequest createRecipeRequest) {
 
         Recipe recipe = new Recipe();
@@ -59,6 +69,13 @@ public class RecipeService {
         return recipeMapper.toRecipeResponse(recipe);
     }
 
+    /**
+     * Retrieves a recipe by its ID.
+     *
+     * @param id the recipe ID
+     * @return the requested recipe
+     * @throws EntityNotFoundException if the recipe does not exist
+     */
     @Transactional
     public RecipeResponse getRecipe(Long id) {
         Recipe recipe = recipeRepository.findById(id)
@@ -66,6 +83,11 @@ public class RecipeService {
         return recipeMapper.toRecipeResponse(recipe);
     }
 
+    /**
+     * Retrieves all recipes.
+     *
+     * @return a list of all recipes
+     */
     @Transactional
     public List<RecipeResponse> getAllRecipes() {
         return recipeRepository.findAll().stream()

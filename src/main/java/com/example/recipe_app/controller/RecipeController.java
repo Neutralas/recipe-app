@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller for managing recipes.
+ */
 @RestController
 @RequestMapping("/recipes")
 public class RecipeController {
@@ -18,17 +21,34 @@ public class RecipeController {
         this.recipeService = recipeService;
     }
 
+    /**
+     * Creates a new recipe.
+     *
+     * @param createRecipeRequest the recipe data
+     * @return the created recipe
+     */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public RecipeResponse addRecipe(@RequestBody CreateRecipeRequest createRecipeRequest) {
         return recipeService.createRecipe(createRecipeRequest);
     }
 
+    /**
+     * Retrieves all recipes.
+     *
+     * @return a list of all recipes
+     */
     @GetMapping
     public List<RecipeResponse> getAllRecipes() {
         return recipeService.getAllRecipes();
     }
 
+    /**
+     * Retrieves a recipe by its ID.
+     *
+     * @param id the recipe ID
+     * @return the requested recipe
+     */
     @GetMapping("/{id}")
     public RecipeResponse getRecipe(@PathVariable Long id) {
         return recipeService.getRecipe(id);

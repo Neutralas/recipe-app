@@ -15,18 +15,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Service responsible for creating and retrieving shopping lists.
+ */
 @Service
 public class ShoppingListService {
-
-    // create a shopping list
-    // shopping list consists of shopping list items
-    // each shopping list item is basically an ingredient, just with summed up quantities
-
-    // i am given recipe ids, I can extract what recipe ingredients make them up
-    // from recipe ingredient, I can get the ingredient and its quantity
-    // I loop through all ingredients with the same name and add their quantities
-        // and save them as a shopping list item
-    // add all shopping list items to a single shopping list
 
     private final RecipeIngredientRepository recipeIngredientRepository;
     private final ShoppingListRepository shoppingListRepository;
@@ -38,6 +31,14 @@ public class ShoppingListService {
         this.shoppingListMapper = shoppingListMapper;
     }
 
+    /**
+     * Builds a shopping list from the selected recipes.
+     * Ingredients shared by multiple recipes are combined and their
+     * quantities are summed.
+     *
+     * @param recipeIds the IDs of the recipes to include
+     * @return the created shopping list
+     */
     public ShoppingListResponse buildShoppingList(List<Long> recipeIds) {
 
         ShoppingList shoppingList = new ShoppingList();
@@ -69,6 +70,13 @@ public class ShoppingListService {
         return shoppingListMapper.toShoppingListResponse(shoppingList);
     }
 
+    /**
+     * Retrieves a shopping list by its ID.
+     *
+     * @param shoppingListId the shopping list ID
+     * @return the requested shopping list
+     * @throws EntityNotFoundException if the shopping list does not exist
+     */
     @Transactional
     public ShoppingListResponse retrieveShoppingList(Long shoppingListId) {
         ShoppingList shoppingList = shoppingListRepository.findById(shoppingListId)
@@ -76,6 +84,11 @@ public class ShoppingListService {
         return shoppingListMapper.toShoppingListResponse(shoppingList);
     }
 
+    /**
+     * Retrieves all shopping lists.
+     *
+     * @return a list of all shopping lists
+     */
     @Transactional
     public List<ShoppingListResponse> getAllShoppingLists() {
         return shoppingListRepository.findAll().stream()
